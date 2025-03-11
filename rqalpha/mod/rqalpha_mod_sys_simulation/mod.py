@@ -83,7 +83,7 @@ class SimulationMod(AbstractMod):
     def parse_matching_type(me_str, frequency):
         if me_str is None:
             # None 表示根据 frequency 自动选择
-            if frequency in ["1d", "1m"]:
+            if frequency in ["1d", "1m", "5m", "15m", "30m", "60m", "120m"]:
                 me_str = "current_bar"
             elif frequency == "tick":
                 me_str = "last"

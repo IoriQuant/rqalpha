@@ -33,7 +33,7 @@ from rqalpha.core.events import EVENT
 from rqalpha.interface import AbstractMod, AbstractPosition
 from rqalpha.utils.i18n import gettext as _
 from rqalpha.utils import INST_TYPE_IN_STOCK_ACCOUNT
-from rqalpha.utils.datetime_func import convert_int_to_date
+from rqalpha.utils.datetime_func import convert_int_to_date, convert_date_to_int
 from rqalpha.utils.logger import user_system_log
 from rqalpha.const import DAYS_CNT
 from rqalpha.api import export_as_api
@@ -148,6 +148,19 @@ class AnalyserMod(AbstractMod):
                     skip_suspended=False,
                 )
                 if len(bars) == len(trading_dates) + 1:
+                    """ sss = set()
+                    for d in bars:
+                        dtt = d['datetime']
+                        sss.add(dtt)
+                    for d in trading_dates:
+                        d = convert_date_to_int(d)
+                        if d not in sss:
+                            user_system_log.info(f'{d}日期没有数据')
+                    user_system_log.info(_s)
+                    user_system_log.info(_e)
+                    user_system_log.info(len(trading_dates) + 1)
+                    user_system_log.info(bars[:5]['datetime'])
+                    user_system_log.info(trading_dates) """
                     if convert_int_to_date(bars[1]['datetime']).date() != _s:
                         raise RuntimeError(_(
                             "benchmark {} missing data between backtest start date {} and end date {}").format(order_book_id, _s, _e)

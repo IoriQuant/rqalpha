@@ -263,12 +263,17 @@ class BaseDataSource(AbstractDataSource):
         df_bars = pd.DataFrame(bars)
         df_bars['datetime'] = df_bars.apply(lambda x: convert_int_to_datetime(x['datetime']), axis=1)
         df_bars = df_bars.set_index('datetime')
+        
         nead_fields = fields
         if isinstance(nead_fields, str):
             nead_fields = [nead_fields]
         hows = {field: BAR_RESAMPLE_FIELD_METHODS[field] for field in nead_fields if field in BAR_RESAMPLE_FIELD_METHODS}
-        df_bars = df_bars.resample('W-Fri').agg(hows)
+        df_bars = df_bars.resample('W-FRI').agg(hows)
+        
+        # 删除含有 NaN 值的行
+        df_bars = df_bars.dropna()
         df_bars.index = df_bars.index.map(self._update_weekly_trading_date_index)
+        
         df_bars = df_bars[~df_bars.index.duplicated(keep='first')]
         df_bars.sort_index(inplace=True)
         df_bars = df_bars[-bar_count:]
@@ -307,7 +312,8 @@ class BaseDataSource(AbstractDataSource):
 
             left = i - bar_count * 5 if i >= bar_count * 5 else 0
             bars = bars[left:i]
-
+            if len(bars) <= 0:
+                return bars
             if adjust_type == 'none' or instrument.type in {'Future', 'INDX'}:
                 # 期货及指数无需复权
                 week_bars = self.resample_week_bars(bars, bar_count, fields)
@@ -319,7 +325,12 @@ class BaseDataSource(AbstractDataSource):
 
             adjust_bars_date = adjust_bars(bars, self.get_ex_cum_factor(instrument.order_book_id),
                                            fields, adjust_type, adjust_orig)
+            #from line_profiler import LineProfiler
+            #lp = LineProfiler()
+            #lp_wrapper = lp(self.resample_week_bars)
             adjust_week_bars = self.resample_week_bars(adjust_bars_date, bar_count, fields)
+            #adjust_week_bars = lp_wrapper(adjust_bars_date, bar_count, fields)
+            #lp.print_stats()
             return adjust_week_bars if fields is None else adjust_week_bars[fields]
         dt = np.uint64(convert_date_to_int(dt))
         i = bars['datetime'].searchsorted(dt, side='right')

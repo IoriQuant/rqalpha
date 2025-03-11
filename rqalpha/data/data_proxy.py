@@ -34,7 +34,7 @@ from rqalpha.utils.datetime_func import convert_int_to_datetime, convert_date_to
 from rqalpha.utils.typing import DateLike, StrOrIter
 from rqalpha.interface import AbstractDataSource, AbstractPriceBoard
 from rqalpha.core.execution_context import ExecutionContext
-
+from line_profiler import LineProfiler
 
 class DataProxy(TradingDatesMixin):
     def __init__(self, data_source, price_board):
@@ -205,12 +205,53 @@ class DataProxy(TradingDatesMixin):
     def history_bars(self, order_book_id, bar_count, frequency, field, dt,
                      skip_suspended=True, include_now=False,
                      adjust_type='pre', adjust_orig=None):
-        instrument = self.instruments(order_book_id)
+        instrument = self.instrument(order_book_id)
         if adjust_orig is None:
             adjust_orig = dt
-        return self._data_source.history_bars(instrument, bar_count, frequency, field, dt,
+        lp = LineProfiler()
+        lp_wrapper = lp(self._data_source.history_bars)
+        r = lp_wrapper(instrument, bar_count, frequency, field, dt,
                                               skip_suspended=skip_suspended, include_now=include_now,
                                               adjust_type=adjust_type, adjust_orig=adjust_orig)
+        lp.print_stats()
+
+        """ r =  self._data_source.history_bars(instrument, bar_count, frequency, field, dt,
+                                              skip_suspended=skip_suspended, include_now=include_now,
+                                              adjust_type=adjust_type, adjust_orig=adjust_orig) """
+        return r
+    
+    def history_bars_in_df(self, order_book_id, bar_count, frequency, fields, dt, adjust_type='pre')->pd.DataFrame:
+        instrument = self.instrument(order_book_id)
+        #lp = LineProfiler()
+        #lp_wrapper = lp(self._data_source.history_bars_in_df)
+        #r = lp_wrapper(instrument, bar_count, frequency, fields, dt, adjust_type=adjust_type)
+        #lp.print_stats()
+        r =  self._data_source.history_bars_in_df(
+            instrument, bar_count, frequency, fields, dt,
+            adjust_type=adjust_type
+        )
+        return r
+    
+    def history_bars_4_fast_bt(self, order_book_id, bar_count, frequency, fields, dt)->Union[np.ndarray, pd.DataFrame]:
+        """
+        为快速回测开发的历史数据接口，
+        为了快速出结果，因此不做复权处理，
+        甚至不同周期的数据结构也不做统一转换，
+        5m、1d周期两个基础周期返回np.ndarray结构，时间格式为int64或unint64
+        其他需要重采样的周期返回pd.DataFrame结构，时间格式为datetime
+        所有处理操作下沉到调用方，
+        因为调用方可以在快速拿到所有原始数据之后利用多进程处理
+        """
+        
+        instrument = self.instrument(order_book_id)
+        lp = LineProfiler()
+        lp_wrapper = lp(self._data_source.history_bars_4_fast_bt)
+        r = lp_wrapper(instrument, bar_count, frequency, fields, dt)
+        lp.print_stats()
+        """ r =  self._data_source.history_bars_4_fast_bt(
+            instrument, bar_count, frequency, fields, dt
+        ) """
+        return r
 
     def history_ticks(self, order_book_id, count, dt):
         instrument = self.instruments(order_book_id)
@@ -284,7 +325,7 @@ class DataProxy(TradingDatesMixin):
         return li
         # return [i for i in self._data_source.get_instruments(types=types) if dt is None or i.listing_at(dt)]
 
-    @lru_cache(2048)
+    @lru_cache(None)
     def instrument(self, sym_or_id):
         return next(iter(self._data_source.get_instruments(id_or_syms=[sym_or_id])), None)
 
