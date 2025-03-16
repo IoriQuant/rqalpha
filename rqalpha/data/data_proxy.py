@@ -208,50 +208,41 @@ class DataProxy(TradingDatesMixin):
         instrument = self.instrument(order_book_id)
         if adjust_orig is None:
             adjust_orig = dt
-        lp = LineProfiler()
+        """ lp = LineProfiler()
         lp_wrapper = lp(self._data_source.history_bars)
         r = lp_wrapper(instrument, bar_count, frequency, field, dt,
                                               skip_suspended=skip_suspended, include_now=include_now,
                                               adjust_type=adjust_type, adjust_orig=adjust_orig)
-        lp.print_stats()
+        lp.print_stats() """
 
-        """ r =  self._data_source.history_bars(instrument, bar_count, frequency, field, dt,
+        r =  self._data_source.history_bars(instrument, bar_count, frequency, field, dt,
                                               skip_suspended=skip_suspended, include_now=include_now,
-                                              adjust_type=adjust_type, adjust_orig=adjust_orig) """
+                                              adjust_type=adjust_type, adjust_orig=adjust_orig)
         return r
     
-    def history_bars_in_df(self, order_book_id, bar_count, frequency, fields, dt, adjust_type='pre')->pd.DataFrame:
-        instrument = self.instrument(order_book_id)
-        #lp = LineProfiler()
-        #lp_wrapper = lp(self._data_source.history_bars_in_df)
-        #r = lp_wrapper(instrument, bar_count, frequency, fields, dt, adjust_type=adjust_type)
-        #lp.print_stats()
-        r =  self._data_source.history_bars_in_df(
-            instrument, bar_count, frequency, fields, dt,
-            adjust_type=adjust_type
-        )
-        return r
-    
-    def history_bars_4_fast_bt(self, order_book_id, bar_count, frequency, fields, dt)->Union[np.ndarray, pd.DataFrame]:
+    def history_bars_4_fast_bt(self, order_book_id, bar_count, frequency, fields, dt)->np.ndarray:
         """
         为快速回测开发的历史数据接口，
         为了快速出结果，因此不做复权处理，
         甚至不同周期的数据结构也不做统一转换，
-        5m、1d周期两个基础周期返回np.ndarray结构，时间格式为int64或unint64
-        其他需要重采样的周期返回pd.DataFrame结构，时间格式为datetime
+        返回np.ndarray结构，时间格式为int64或unint64
         所有处理操作下沉到调用方，
         因为调用方可以在快速拿到所有原始数据之后利用多进程处理
         """
         
         instrument = self.instrument(order_book_id)
-        lp = LineProfiler()
+        """ lp = LineProfiler()
         lp_wrapper = lp(self._data_source.history_bars_4_fast_bt)
         r = lp_wrapper(instrument, bar_count, frequency, fields, dt)
-        lp.print_stats()
-        """ r =  self._data_source.history_bars_4_fast_bt(
+        lp.print_stats() """
+        r =  self._data_source.history_bars_4_fast_bt(
             instrument, bar_count, frequency, fields, dt
-        ) """
+        )
         return r
+    
+    def get_dr(self, order_book_id)->pd.DataFrame:
+        instrument = self.instrument(order_book_id)
+        return self._data_source.get_dr(instrument)
 
     def history_ticks(self, order_book_id, count, dt):
         instrument = self.instruments(order_book_id)

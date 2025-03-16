@@ -253,9 +253,10 @@ class BaseDataSource(AbstractDataSource):
     def get_ex_cum_factor(self, order_book_id):
         return self._ex_cum_factor.get_factors(order_book_id)
 
-    def _update_weekly_trading_date_index(self, idx):
+    def _update_weekly_trading_date_index(self, idx:pd.Timestamp):
         env = Environment.get_instance()
-        if env.data_proxy.is_trading_date(idx):
+        #breakpoint()
+        if env.data_proxy.is_trading_date(datetime.fromtimestamp(idx.timestamp()).date()):
             return idx
         return env.data_proxy.get_previous_trading_date(idx)
 
