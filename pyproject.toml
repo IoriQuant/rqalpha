@@ -1,6 +1,6 @@
 [project]
 name = "rqalpha"
-version = "5.5.666"
+version = "5.5.666999"
 description = "RQAlpha5.5魔改版"
 authors = [
     {name = "iori",email = "371803085@qq.com"}
@@ -40,4 +40,5 @@ name = "tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
 priority = "primary"
 
-
+[tool.poetry.scripts]
+rqalpha = "rqalpha.__main__:entry_point"
